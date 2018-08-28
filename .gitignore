@@ -3,3 +3,5 @@ fig
 data
 *.csv
 .vscode
+*.pkl
+checkpoints
