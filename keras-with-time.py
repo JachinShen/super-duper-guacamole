@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.layers import Input, Dense
 from keras.models import Model
 from datetime import datetime, timedelta
-from submit import get_all_density
+from evaluate import test_model
 #%%
 def get_data_with_time():
     frames = []
@@ -65,36 +65,8 @@ train_img = np.array([
     img.flatten().astype("float32")/100.0 for img in density])
 #%%
 model.fit(x=[noise_samples, hours], y=train_img, epochs=20, batch_size=10)
-
-#%%
-def test_error(target, outputs):
-    return np.sqrt(np.mean(np.square(target - outputs)))
-
-def get_test_img(month, day, hour):
-    key = "hour: {}".format(hour)
-    date = datetime(2017, month, day)
-    date_str = datetime.strftime(date, "%Y%m%d")
-    hist_file = h5py.File("./data/hist/{}.h5"
-        .format(date_str), "r")
-    test_img = hist_file[key][:]
-    hist_file.close()
-    return test_img
-plt.imshow(test_pred_img)
-    plt.show()
-def test_model(model):
-    np.random.seed(233)
-    test_sample = np.random.uniform(size=(10, 10))
-    test_hour = np.array([9])
-    test_input = test_sample.reshape((1, 100))
-    test_pred = model.predict([test_input, test_hour])
-    test_pred = (test_pred * 100).astype('int32')
-    test_pred_img = test_pred.reshape(density[0].shape)
-    test_real_img = get_test_img(3, 12, 9)
-    plt.imshow(test_pred_img)
-    plt.show()
-    test_pred_img = get_all_density(test_pred_img)['car_number']
-    test_real_img = get_all_density(test_real_img)['car_number']
-    print("RMSE: {}".format(
-        test_error(test_real_img, test_pred_img)))
-    
-test_model(model)
+#%%   
+test_model(model, 3, 12, 9)
+test_model(model, 3, 12, 10)
+test_model(model, 3, 12, 11)
+test_model(model, 3, 12, 12)
