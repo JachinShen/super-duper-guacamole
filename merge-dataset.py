@@ -2,6 +2,7 @@
 import numpy as np
 import h5py
 import pickle
+import matplotlib.pyplot as plt
 from keras import backend as K
 from keras.layers import Input, Dense
 from keras.models import Model
@@ -38,8 +39,6 @@ def get_data_with_time():
 
 density, days, hours = get_data_with_time()
 #%%
-print(noise_samples.shape)
-#%%
 img_size = density[0].shape[0]*density[0].shape[1]
 noise_size = 100
 #inputs_real_img = Input(shape=(img_size, ), name="real_img")
@@ -65,10 +64,11 @@ model.fit(x=noise_samples, y=train_img, epochs=20, batch_size=10)
 #%%
 def test_model(model):
     test_sample = np.random.uniform(size=(10, 10))
-    plt.imshow(test_samples)
+    plt.imshow(test_sample)
     plt.show()
-    test_input = test_samples.reshape((1, 100))
-    test_pred = model.predict(test_x)
+    test_input = test_sample.reshape((1, 100))
+    test_pred = model.predict(test_input)
+    test_pred = (test_pred * 100).astype('int32')
     test_pred_img = test_pred.reshape(density[0].shape)
     plt.imshow(test_pred_img)
     plt.show()
