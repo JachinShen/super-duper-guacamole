@@ -10,7 +10,7 @@ def get_data():
     frames = []
     date = datetime(2017, 1, 2)
     delta_day = timedelta(days=1)
-    while date <= datetime(2017, 1, 2):
+    while date <= datetime(2017, 3, 2):
         date_str = datetime.strftime(date, "%Y%m%d")
         hist_file = h5py.File("./data/hist/{}.h5"
             .format(date_str), "r")
