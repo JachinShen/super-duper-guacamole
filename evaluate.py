@@ -24,11 +24,13 @@ def test_model(model, month, day, hour, is_show=False):
 
     # input
     sample = np.random.uniform(size=(10, 10))
-    hour_input = np.array([hour])
+    weekday = datetime(2017, month, day).weekday()
+    hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
+    day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
 
     # predict
-    pred = model.predict([sample_input, hour_input])
+    pred = model.predict([sample_input, hour_input, day_input])
 
     # renormalize
     pred = (pred * 100).astype('int32')
@@ -51,11 +53,13 @@ def deploy_model(model, month, day, hour, is_show=False):
 
     # input
     sample = np.random.uniform(size=(10, 10))
-    hour_input = np.array([hour])
+    weekday = datetime(2017, month, day).weekday()
+    hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
+    day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
 
     # predict
-    pred = model.predict([sample_input, hour_input])
+    pred = model.predict([sample_input, hour_input, day_input])
 
     # renormalize
     pred = (pred * 100).astype('int32')
