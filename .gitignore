@@ -9,3 +9,4 @@ envs
 keras-with-time.py
 __pycache__
 *.pyc
+unit_test
