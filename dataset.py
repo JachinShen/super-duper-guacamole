@@ -1,3 +1,4 @@
+# author: JachinShen(jachinshen@foxmail.com)
 import numpy as np
 import pandas as pd
 import h5py
@@ -86,13 +87,13 @@ def extract_all_hists(begin_date, end_date, folder_path="./data/hist/"):
                 f.create_dataset('hour: {}'.format(hour), data=hist)
         date += delta_day
 
-def get_hist_with_time():
+def get_hist_with_time(end_date):
     frames = []
     hours = []
     weekday = []
     date = datetime(2017, 1, 2)
     delta_day = timedelta(days=1)
-    while date <= datetime(2017, 3, 12):
+    while date <= end_date:
         date_str = datetime.strftime(date, "%Y%m%d")
         hist_file = h5py.File("./data/hist/{}.h5"
             .format(date_str), "r")
