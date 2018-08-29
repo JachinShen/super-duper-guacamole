@@ -9,7 +9,8 @@ from keras import backend as K
 from keras.layers import Input, Dense
 from keras.models import Model
 from datetime import datetime, timedelta
-from evaluate import test_model
+from evaluate import test_model, deploy_model
+from submit import submit_csv
 #%%
 def get_data_with_time():
     frames = []
@@ -66,7 +67,8 @@ train_img = np.array([
 #%%
 model.fit(x=[noise_samples, hours], y=train_img, epochs=20, batch_size=10)
 #%%   
-test_model(model, 3, 12, 9)
-test_model(model, 3, 12, 10)
-test_model(model, 3, 12, 11)
-test_model(model, 3, 12, 12)
+hists = []
+for hour in range(9, 13):
+    hist = deploy_model(model, 3, 13, hour)
+    hists.append(hist)
+submit_csv(hists)
