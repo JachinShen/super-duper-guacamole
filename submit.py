@@ -17,19 +17,23 @@ def get_range_density(hist, range_xy):
     center_lon = lon_quantize((range_xy[1][0] + range_xy[1][1]) / 2)
     return (int)(hist[center_lat][center_lon])
 
-def get_all_density(hist):
+def get_hour_density(hist, hour):
+    X_sub = get_submission_range()
+    X_sub['day'] = "20170313"
+    X_sub['hour'] = hour
+    X_sub['car_number'] = X_sub.apply(
+        lambda row: (get_range_density(hist,
+            [row['latitude_range'], row['longitude_range']])), axis=1)
+    return X_sub
+
+def get_all_density(hists):
     frames = []
-    for hour in range(9, 13):
-        X_sub = get_submission_range()
-        X_sub['day'] = "20170313"
-        X_sub['hour'] = hour
-        X_sub['car_number'] = X_sub.apply(
-            lambda row: (get_range_density(hist,
-                [row['latitude_range'], row['longitude_range']])), axis=1)
+    for hist, hour in zip(hists, range(9, 13)):
+        X_sub = get_hour_density(hist, hour)
         frames.append(X_sub)
     return pd.concat(frames)
 
-def submit_csv(hist):
-    submission = get_all_density(hist).drop(
+def submit_csv(hists):
+    submission = get_all_density(hists).drop(
         ['latitude_range', 'longitude_range'], axis=1)
     submission.to_csv("./submission.csv", index=False)

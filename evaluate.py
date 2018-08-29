@@ -3,7 +3,7 @@ import pandas as pd
 import h5py
 import matplotlib.pyplot as plt
 import quantize
-from submit import get_all_density
+from submit import get_hour_density
 from datetime import datetime, timedelta
 
 def RMSE(target, outputs):
@@ -41,7 +41,30 @@ def test_model(model, month, day, hour, is_show=False):
         plt.imshow(pred_img)
         plt.show()
 
-    pred_sub = get_all_density(pred_img)['car_number']
-    real_sub = get_all_density(real_img)['car_number']
+    pred_sub = get_hour_density(pred_img, hour)['car_number']
+    real_sub = get_hour_density(real_img, hour)['car_number']
     print("Predict {}-{} {}:00".format(month, day, hour),
         "RMSE: {}".format(RMSE(pred_sub, real_sub)))
+
+def deploy_model(model, month, day, hour, is_show=False):
+    np.random.seed(233)
+
+    # input
+    sample = np.random.uniform(size=(10, 10))
+    hour_input = np.array([hour])
+    sample_input = sample.reshape((1, 100))
+
+    # predict
+    pred = model.predict([sample_input, hour_input])
+
+    # renormalize
+    pred = (pred * 100).astype('int32')
+
+    # get image
+    pred_img = pred.reshape((quantize.lat_ctr()-1, quantize.lon_ctr()-1))
+
+    if is_show:
+        plt.imshow(pred_img)
+        plt.show()
+
+    return pred_img
