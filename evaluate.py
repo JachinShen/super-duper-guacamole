@@ -41,7 +41,14 @@ def test_model(model, month, day, hour, is_show=False):
     real_img = get_test_img(month, day, hour)
 
     if is_show:
+        print("Predict Image")
         plt.imshow(pred_img)
+        plt.show()
+        print("Real Image")
+        plt.imshow(real_img)
+        plt.show()
+        print("Difference:")
+        plt.imshow(pred_img - real_img)
         plt.show()
 
     pred_sub = get_hour_density(pred_img, hour)['car_number']
@@ -49,12 +56,12 @@ def test_model(model, month, day, hour, is_show=False):
     print("Predict {}-{} {}:00".format(month, day, hour),
         "RMSE: {}".format(RMSE(pred_sub, real_sub)))
 
-def deploy_model(model, month, day, hour, is_show=False):
+def deploy_model(model, date, hour, is_show=False):
     np.random.seed(233)
 
     # input
     sample = np.random.uniform(size=(10, 10))
-    weekday = datetime(2017, month, day).weekday()
+    weekday = date.weekday()
     hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))

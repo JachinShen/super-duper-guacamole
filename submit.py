@@ -1,5 +1,6 @@
 import numpy as numpy
 import pandas as pd
+from datetime import datetime
 from quantize import lat_quantize, lon_quantize
 
 def convert_str_range(string):
@@ -17,9 +18,9 @@ def get_range_density(hist, range_xy):
     center_lon = lon_quantize((range_xy[1][0] + range_xy[1][1]) / 2)
     return (int)(hist[center_lat][center_lon])
 
-def get_hour_density(hist, hour):
+def get_hour_density(hist, date, hour):
     X_sub = get_submission_range()
-    X_sub['day'] = "20170313"
+    X_sub['day'] = datetime.strftime(date, "%Y%m%d")
     X_sub['hour'] = hour
     X_sub['car_number'] = X_sub.apply(
         lambda row: (get_range_density(hist,
@@ -28,9 +29,9 @@ def get_hour_density(hist, hour):
 
 def get_all_density(hists):
     frames = []
-    for hist, hour in zip(hists, range(9, 13)):
-        X_sub = get_hour_density(hist, hour)
-        frames.append(X_sub)
+    #for hist, hour in zip(hists, range(9, 13)):
+        #X_sub = get_hour_density(hist, hour)
+        #frames.append(X_sub)
     return pd.concat(frames)
 
 def submit_csv(hists):

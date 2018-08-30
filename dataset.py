@@ -78,26 +78,25 @@ def extract_all_hists(begin_date, end_date, folder_path="./data/hist/"):
         print("Processing {}".format(date_str))
         with h5py.File("{}{}.h5"
             .format(folder_path, date_str), "w") as f:
-
-            for hour in range(9, 13):
-                data = get_raw_data(date.month, date.day)
+            data = get_raw_data(date.month, date.day)
+            for hour in range(9, 23):
                 hist = get_hist_hour(data,
                     datetime(2017, date.month, date.day, hour),
                     datetime(2017, date.month, date.day, hour+1))
                 f.create_dataset('hour: {}'.format(hour), data=hist)
         date += delta_day
 
-def get_hist_with_time(end_date):
+def get_hist_with_time(begin_date, end_date):
     frames = []
     hours = []
     weekday = []
-    date = datetime(2017, 1, 2)
+    date = begin_date
     delta_day = timedelta(days=1)
     while date <= end_date:
         date_str = datetime.strftime(date, "%Y%m%d")
         hist_file = h5py.File("./data/hist/{}.h5"
             .format(date_str), "r")
-        for hour in range(9, 13):
+        for hour in range(9, 23):
             key = "hour: {}".format(hour)
             frames.append(hist_file[key][:])
             hours.append(hour)
