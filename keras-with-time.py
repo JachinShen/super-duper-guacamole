@@ -12,7 +12,7 @@ from evaluate import test_model, deploy_model
 from submit import submit_csv, get_hour_density
 from dataset import get_hist_with_time
 import quantize
-is_test = False
+is_test = True
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 def preprocess_data():
@@ -23,7 +23,7 @@ def preprocess_data():
         density, weekday, hours = get_hist_with_time(
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
-    np.random.seed(233)
+    np.random.seed()
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
     hours = (hours.astype("float32") - 8) / 14.0
     weekday = (weekday.astype("float32") + 1) / 7.0
