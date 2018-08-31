@@ -26,7 +26,7 @@ def test_model(model, date, hour, is_show=False):
     # input
     sample = np.random.uniform(size=(10, 10))
     weekday = date.weekday()
-    hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
+    hour_input = (np.array([hour]).astype("float32") - 8) / 14.0
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
 

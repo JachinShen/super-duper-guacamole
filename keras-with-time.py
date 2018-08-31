@@ -12,7 +12,7 @@ from evaluate import test_model, deploy_model
 from submit import submit_csv, get_hour_density
 from dataset import get_hist_with_time
 import quantize
-is_test = True
+is_test = False
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 def preprocess_data():
