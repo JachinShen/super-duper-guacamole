@@ -20,12 +20,12 @@ def get_test_img(month, day, hour):
     hist_file.close()
     return test_img
 
-def test_model(model, month, day, hour, is_show=False):
+def test_model(model, date, hour, is_show=False):
     np.random.seed(233)
 
     # input
     sample = np.random.uniform(size=(10, 10))
-    weekday = datetime(2017, month, day).weekday()
+    weekday = date.weekday()
     hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
@@ -38,7 +38,7 @@ def test_model(model, month, day, hour, is_show=False):
 
     # get image
     pred_img = pred.reshape((quantize.lat_ctr()-1, quantize.lon_ctr()-1))
-    real_img = get_test_img(month, day, hour)
+    real_img = get_test_img(date.month, date.day, hour)
 
     if is_show:
         print("Predict Image")
@@ -51,9 +51,9 @@ def test_model(model, month, day, hour, is_show=False):
         plt.imshow(pred_img - real_img)
         plt.show()
 
-    pred_sub = get_hour_density(pred_img, hour)['car_number']
-    real_sub = get_hour_density(real_img, hour)['car_number']
-    print("Predict {}-{} {}:00".format(month, day, hour),
+    pred_sub = get_hour_density(pred_img, date, hour)['car_number']
+    real_sub = get_hour_density(real_img, date, hour)['car_number']
+    print("Predict {} {}:00".format(datetime.strftime(date, "%Y%m%d"), hour),
         "RMSE: {}".format(RMSE(pred_sub, real_sub)))
 
 def deploy_model(model, date, hour, is_show=False):
@@ -62,7 +62,7 @@ def deploy_model(model, date, hour, is_show=False):
     # input
     sample = np.random.uniform(size=(10, 10))
     weekday = date.weekday()
-    hour_input = (np.array([hour]).astype("float32") - 8) / 4.0
+    hour_input = (np.array([hour]).astype("float32") - 8) / 14.0
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
 

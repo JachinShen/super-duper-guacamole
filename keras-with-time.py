@@ -5,14 +5,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import keras
 from keras import backend as K
-from keras.layers import Input, Dense, Dropout
+from keras.layers import Input, Dense, Add, Dropout
 from keras.models import Model
 from datetime import datetime, timedelta
 from evaluate import test_model, deploy_model
 from submit import submit_csv, get_hour_density
 from dataset import get_hist_with_time
 import quantize
-is_test = False
+is_test = True
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 def preprocess_data():
@@ -24,7 +24,7 @@ def preprocess_data():
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
-    hours = (hours.astype("float32") - 8) / 4.0
+    hours = (hours.astype("float32") - 8) / 14.0
     weekday = (weekday.astype("float32") + 1) / 7.0
     #density = density.reshape((*density.shape, 1))
     train_img = np.array([
@@ -41,10 +41,11 @@ def build_model():
 
     print(inputs_noise_img)
 
-    x = Dense(64, activation="relu")(inputs_noise_img)
-    x = keras.layers.concatenate([inputs_weekday, x])
+    noise_dense = Dense(64, activation="relu")(inputs_noise_img)
+    hour_dense = Dense(64, activation="relu")(inputs_hour)
+    x = Add()([noise_dense, hour_dense])
     x = Dense(64, activation="relu")(x)
-    x = keras.layers.concatenate([inputs_hour, x])
+    x = keras.layers.concatenate([inputs_weekday, x])
     x = Dense(64, activation="relu")(x)
     x = Dropout(0.2)(x)
     predictions = Dense(img_size)(x)
@@ -64,9 +65,12 @@ if __name__ == "__main__":
         model.fit(x=X, y=y, epochs=5, batch_size=7)
 
     if is_test:
-        for day in range(3, 13):
-            for hour in range(9, 13):
-                test_model(model, 3, day, hour, True) 
+        date = datetime(2017, 3, 6)
+        delta_day = timedelta(days = 1)
+        while date <= datetime(2017, 3, 12):
+            for hour in range(9, 23):
+                test_model(model, date, hour) 
+            date += delta_day
     else:
         frames = []
         date = datetime(2017, 3, 13)
