@@ -53,8 +53,10 @@ def test_model(model, date, hour, is_show=False):
 
     pred_sub = get_hour_density(pred_img, date, hour)['car_number']
     real_sub = get_hour_density(real_img, date, hour)['car_number']
+    error = RMSE(pred_sub, real_sub)
     print("Predict {} {}:00".format(datetime.strftime(date, "%Y%m%d"), hour),
-        "RMSE: {}".format(RMSE(pred_sub, real_sub)))
+        "RMSE: {}".format(error))
+    return error
 
 def deploy_model(model, date, hour, is_show=False):
     np.random.seed(233)

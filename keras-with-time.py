@@ -23,6 +23,7 @@ def preprocess_data():
         density, weekday, hours = get_hist_with_time(
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
+    np.random.seed(233)
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
     hours = (hours.astype("float32") - 8) / 14.0
     weekday = (weekday.astype("float32") + 1) / 7.0
@@ -65,12 +66,14 @@ if __name__ == "__main__":
         model.fit(x=X, y=y, epochs=5, batch_size=7)
 
     if is_test:
+        errors = []
         date = datetime(2017, 3, 6)
         delta_day = timedelta(days = 1)
         while date <= datetime(2017, 3, 12):
             for hour in range(9, 23):
-                test_model(model, date, hour) 
+                errors.append(test_model(model, date, hour))
             date += delta_day
+        print("Avearage RMSE:{}".format(np.array(errors).mean()))
     else:
         frames = []
         date = datetime(2017, 3, 13)
