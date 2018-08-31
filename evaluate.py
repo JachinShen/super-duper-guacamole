@@ -7,18 +7,21 @@ import quantize
 from submit import get_hour_density
 from datetime import datetime, timedelta
 
+
 def RMSE(target, outputs):
     return np.sqrt(np.mean(np.square(target - outputs)))
+
 
 def get_test_img(month, day, hour):
     key = "hour: {}".format(hour)
     date = datetime(2017, month, day)
     date_str = datetime.strftime(date, "%Y%m%d")
     hist_file = h5py.File("./data/hist/{}.h5"
-        .format(date_str), "r")
+                          .format(date_str), "r")
     test_img = hist_file[key][:]
     hist_file.close()
     return test_img
+
 
 def generate_test_X(date, hour):
     np.random.seed(233)
@@ -28,6 +31,7 @@ def generate_test_X(date, hour):
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
     return [sample_input, hour_input, day_input]
+
 
 def test_model(model, date, hour, is_show=False):
     # input
@@ -59,14 +63,15 @@ def test_model(model, date, hour, is_show=False):
     error = RMSE(pred_sub, real_sub)
 
     print("Predict {} {}:00".format(datetime.strftime(date, "%Y%m%d"), hour),
-        "RMSE: {}".format(error))
+          "RMSE: {}".format(error))
 
     return error
+
 
 def deploy_model(model, date, hour, is_show=False):
 
     # input
-    X =generate_test_X(date, hour)
+    X = generate_test_X(date, hour)
 
     # predict
     pred = model.predict(X)

@@ -1,5 +1,4 @@
 # author: JachinShen(jachinshen@foxmail.com)
-#%%
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,6 +14,8 @@ import quantize
 is_test = True
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
+
+
 def preprocess_data():
     if is_test:
         density, weekday, hours = get_hist_with_time(
@@ -35,6 +36,7 @@ def preprocess_data():
     y = train_img
     return X, y
 
+
 def build_model():
     inputs_noise_img = Input(shape=(noise_size, ), name="noise_img")
     inputs_hour = Input(shape=(1, ), name="hour")
@@ -51,16 +53,17 @@ def build_model():
     x = Dropout(0.2)(x)
     predictions = Dense(img_size)(x)
     model = Model(inputs=[inputs_noise_img, inputs_hour, inputs_weekday],
-        outputs=predictions)
+                  outputs=predictions)
     return model
 
-def root_mean_squared_error(y_true, y_pred):
-        return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1)) 
 
-#%%
+def root_mean_squared_error(y_true, y_pred):
+    return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+
+
 if __name__ == "__main__":
     model = build_model()
-    model.compile(optimizer = "adam", loss = root_mean_squared_error)
+    model.compile(optimizer="adam", loss=root_mean_squared_error)
     for epochs in range(5):
         X, y = preprocess_data()
         model.fit(x=X, y=y, epochs=5, batch_size=7)
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     if is_test:
         errors = []
         date = datetime(2017, 3, 6)
-        delta_day = timedelta(days = 1)
+        delta_day = timedelta(days=1)
         while date <= datetime(2017, 3, 12):
             for hour in range(9, 23):
                 errors.append(test_model(model, date, hour))
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     else:
         frames = []
         date = datetime(2017, 3, 13)
-        delta_day = timedelta(days = 1)
+        delta_day = timedelta(days=1)
         while date <= datetime(2017, 3, 26):
             for hour in range(9, 23):
                 hist = deploy_model(model, date, hour)

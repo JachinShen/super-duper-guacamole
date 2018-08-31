@@ -10,14 +10,16 @@ lon_min, lon_max = 121.3, 121.8
 lat_ctr = (int)((lat_max - lat_min) / 0.005)
 lon_ctr = (int)((lon_max - lon_min) / 0.005)
 
+
 def extract_hist(data):
     hist, _, _ = np.histogram2d(data['lat'], data['lon'],
-        bins = [range(lat_ctr), range(lon_ctr)])
+                                bins=[range(lat_ctr), range(lon_ctr)])
     return hist
 
+
 def get_hist_hour(data, hour_begin, hour_end):
-    data_hour = data[(hour_begin <= data['date_time']) 
-        & (data['date_time'] < hour_end)]
+    data_hour = data[(hour_begin <= data['date_time'])
+                     & (data['date_time'] < hour_end)]
     data_hour['lat'] = data_hour['lat'].apply(lat_quantize)
     data_hour['lon'] = data_hour['lon'].apply(lon_quantize)
 
@@ -26,6 +28,7 @@ def get_hist_hour(data, hour_begin, hour_end):
     data_hour = data_hour.drop_duplicates(['car_id', 'lat', 'lon'])
     hist = extract_hist(data_hour)
     return hist
+
 
 def get_raw_data(month, day):
     frames = []
@@ -54,21 +57,22 @@ def get_raw_data(month, day):
         filename = ("./data/rcar/BOT_data_rcar_{1}_{1}_part{0}.csv"
                     .format(part, date))
         data_part = pd.read_csv(filename, dtype=rcar_dtype)[features_need]
-        data_part = data_part[(data_part['lat'] > 0.1) 
-            & (data_part['lon'] > 0.1)]
+        data_part = data_part[(data_part['lat'] > 0.1)
+                              & (data_part['lon'] > 0.1)]
         frames.append(data_part)
-        
+
         filename = ("./data/ecar/BOT_data_ecar_{1}_{1}_part{0}.csv"
                     .format(part, date))
         data_part = pd.read_csv(filename, dtype=ecar_dtype)[features_need]
-        data_part = data_part[(data_part['lat'] > 0.1) 
-            & (data_part['lon'] > 0.1)]
+        data_part = data_part[(data_part['lat'] > 0.1)
+                              & (data_part['lon'] > 0.1)]
         frames.append(data_part)
-        
+
     data = pd.concat(frames)
     data["date_time"] = data["date_time"].apply(
         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
     return data
+
 
 def extract_all_hists(begin_date, end_date, folder_path="./data/hist/"):
     date = begin_date
@@ -77,14 +81,16 @@ def extract_all_hists(begin_date, end_date, folder_path="./data/hist/"):
         date_str = datetime.strftime(date, "%Y%m%d")
         print("Processing {}".format(date_str))
         with h5py.File("{}{}.h5"
-            .format(folder_path, date_str), "w") as f:
+                       .format(folder_path, date_str), "w") as f:
             data = get_raw_data(date.month, date.day)
             for hour in range(9, 23):
                 hist = get_hist_hour(data,
-                    datetime(2017, date.month, date.day, hour),
-                    datetime(2017, date.month, date.day, hour+1))
+                                     datetime(2017, date.month,
+                                              date.day, hour),
+                                     datetime(2017, date.month, date.day, hour+1))
                 f.create_dataset('hour: {}'.format(hour), data=hist)
         date += delta_day
+
 
 def get_hist_with_time(begin_date, end_date):
     frames = []
@@ -95,7 +101,7 @@ def get_hist_with_time(begin_date, end_date):
     while date <= end_date:
         date_str = datetime.strftime(date, "%Y%m%d")
         hist_file = h5py.File("./data/hist/{}.h5"
-            .format(date_str), "r")
+                              .format(date_str), "r")
         for hour in range(9, 23):
             key = "hour: {}".format(hour)
             frames.append(hist_file[key][:])
@@ -109,6 +115,7 @@ def get_hist_with_time(begin_date, end_date):
     hours = np.array(hours)
     return frames, weekday, hours
 
+
 if __name__ == "__main__":
     extract_all_hists(datetime(2017, 1, 2),
-        datetime(2017, 1, 2), "./data/test/")
+                      datetime(2017, 1, 2), "./data/test/")
