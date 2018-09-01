@@ -1,17 +1,20 @@
 # author: JachinShen(jachinshen@foxmail.com)
+from datetime import datetime, timedelta
+
+import keras
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import keras
 from keras import backend as K
-from keras.layers import Input, Dense, Add, Dropout
+from keras.layers import Add, Dense, Dropout, Input
 from keras.models import Model
-from datetime import datetime, timedelta
-from evaluate import test_model, deploy_model
-from submit import submit_csv, get_hour_density
-from dataset import get_hist_with_time
+
 import quantize
-is_test = True
+from dataset import get_hist_with_time
+from evaluate import deploy_model, test_model
+from submit import get_hour_density, submit_csv
+
+is_test = False
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 
@@ -46,10 +49,14 @@ def build_model():
 
     noise_dense = Dense(64, activation="relu")(inputs_noise_img)
     hour_dense = Dense(64, activation="relu")(inputs_hour)
+    weekday_dense = Dense(64, activation="relu")(inputs_weekday)
     x = Add()([noise_dense, hour_dense])
     x = Dense(64, activation="relu")(x)
-    x = keras.layers.concatenate([inputs_weekday, x])
+    x = Add()([x, weekday_dense])
     x = Dense(64, activation="relu")(x)
+    x = Add()([x, hour_dense])
+    x = Dense(64, activation="relu")(x)
+    #x = keras.layers.concatenate([inputs_weekday, x])
     x = Dropout(0.2)(x)
     predictions = Dense(img_size)(x)
     model = Model(inputs=[inputs_noise_img, inputs_hour, inputs_weekday],
@@ -64,7 +71,7 @@ def root_mean_squared_error(y_true, y_pred):
 if __name__ == "__main__":
     model = build_model()
     model.compile(optimizer="adam", loss=root_mean_squared_error)
-    for epochs in range(5):
+    for epochs in range(7):
         X, y = preprocess_data()
         model.fit(x=X, y=y, epochs=5, batch_size=7)
 
