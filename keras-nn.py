@@ -27,7 +27,7 @@ def preprocess_data():
         density, weekday, hours = get_hist_with_time(
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
-    np.random.seed()
+    np.random.seed(2333)
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
     hours = (hours.astype("float32") - 8) / 14.0
     weekday = (weekday.astype("float32") + 1) / 7.0

@@ -89,3 +89,37 @@ def deploy_model(model, date, hour, is_show=False):
         plt.show()
 
     return pred_img
+
+def test_model_lstm(model, date, hour, is_show=False):
+    # input
+    X = generate_test_X(date, hour)
+
+    # predict
+    pred = model.predict(X)
+
+    # renormalize
+    pred = (pred * 100).astype('int32')
+
+    # get image
+    pred_img = pred.reshape((quantize.lat_ctr()-1, quantize.lon_ctr()-1))
+    real_img = get_test_img(date.month, date.day, hour)
+
+    if is_show:
+        print("Predict Image")
+        plt.imshow(pred_img)
+        plt.show()
+        print("Real Image")
+        plt.imshow(real_img)
+        plt.show()
+        print("Difference:")
+        plt.imshow(pred_img - real_img)
+        plt.show()
+
+    pred_sub = get_hour_density(pred_img, date, hour)['car_number']
+    real_sub = get_hour_density(real_img, date, hour)['car_number']
+    error = RMSE(pred_sub, real_sub)
+
+    print("Predict {} {}:00".format(datetime.strftime(date, "%Y%m%d"), hour),
+          "RMSE: {}".format(error))
+
+    return error

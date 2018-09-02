@@ -117,6 +117,28 @@ def get_hist_with_time(begin_date, end_date):
     hours = np.array(hours)
     return frames, weekday, hours
 
+def get_hist_as_image(begin_date, end_date):
+    data = []
+    date = begin_date
+    delta_day = timedelta(days=1)
+    while date <= end_date:
+        frames = []
+        date_str = datetime.strftime(date, "%Y%m%d")
+        hist_file = h5py.File("./data/hist/{}.h5"
+                              .format(date_str), "r")
+        for hour in range(9, 23):
+            key = "hour: {}".format(hour)
+            img = hist_file[key][:]
+            img = img.reshape(*img.shape, 1)
+            frames.append(img)
+        hist_file.close()
+        date += delta_day
+        frames = np.array(frames)
+        data.append(frames)
+    data = np.array(data)
+    return data
+
+
 
 if __name__ == "__main__":
     extract_all_hists(datetime(2017, 1, 2),
