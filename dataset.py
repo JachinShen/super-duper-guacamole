@@ -4,6 +4,8 @@ import pandas as pd
 import h5py
 from datetime import datetime, timedelta
 from quantize import lat_quantize, lon_quantize
+import json
+import urllib.request
 
 lat_min, lat_max = 31.1, 31.4
 lon_min, lon_max = 121.3, 121.8
@@ -90,6 +92,7 @@ def get_hist_with_time(begin_date, end_date):
     frames = []
     hours = []
     weekday = []
+    workday = []
     date = begin_date
     delta_day = timedelta(days=1)
     while date <= end_date:
@@ -101,13 +104,32 @@ def get_hist_with_time(begin_date, end_date):
             frames.append(hist_file[key][:])
             hours.append(hour)
             weekday.append(date.weekday())
+            workday.append((is_workday(date)))
         hist_file.close()
         date += delta_day
 
     frames = np.array(frames)
     weekday = np.array(weekday)
     hours = np.array(hours)
-    return frames, weekday, hours
+    workday = np.array(workday)
+    return frames, weekday, hours, workday
+
+def is_workday(date):
+    date_str = datetime.strftime(date, "%Y%m%d")
+    server_url = "http://www.easybots.cn/api/holiday.php?d="
+    vop_url_request = urllib.request.Request(server_url+date_str)
+    vop_response = urllib.request.urlopen(vop_url_request)
+    vop_data= json.loads(vop_response.read())
+    if vop_data[date_str]=='0':
+        return 1
+    elif vop_data[date_str]=='1':
+        return 0
+    elif vop_data[date_str]=='2':
+        return 0
+    else:
+        return 'Error'
+
+
 
 if __name__ == "__main__":
     extract_all_hists(datetime(2017, 1, 2),
