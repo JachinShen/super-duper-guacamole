@@ -172,4 +172,3 @@ weather.to_csv(r'C:/Users/sindy123/Documents')
 if __name__ == "__main__":
     extract_all_hists(datetime(2017, 1, 2),
         datetime(2017, 1, 2), "./data/test/")
-is
