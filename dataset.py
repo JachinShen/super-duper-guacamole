@@ -4,8 +4,14 @@ import pandas as pd
 import h5py
 from datetime import datetime, timedelta
 from quantize import lat_quantize, lon_quantize
+import requests  #导入requests
+from bs4 import BeautifulSoup  #导入bs4中的BeautifulSoup
+import os
+import re
+import csv
+import time
 import json
-import urllib.request
+#coding=utf-8
 
 lat_min, lat_max = 31.1, 31.4
 lon_min, lon_max = 121.3, 121.8
@@ -114,23 +120,48 @@ def get_hist_with_time(begin_date, end_date):
     workday = np.array(workday)
     return frames, weekday, hours, workday
 
-def is_workday(date):
-    date_str = datetime.strftime(date, "%Y%m%d")
-    server_url = "http://www.easybots.cn/api/holiday.php?d="
-    vop_url_request = urllib.request.Request(server_url+date_str)
-    vop_response = urllib.request.urlopen(vop_url_request)
-    vop_data= json.loads(vop_response.read())
-    if vop_data[date_str]=='0':
-        return 1
-    elif vop_data[date_str]=='1':
-        return 0
-    elif vop_data[date_str]=='2':
-        return 0
-    else:
-        return 'Error'
 
+class get_history_weather():
+    def __init__(self):
+        self.request_url = 'http://lishi.tianqi.com/shanghai/index.html'
+    def get_url(self):
+        # 获取所有月份的url
+        html = requests.get(self.request_url).text
+        Soup = BeautifulSoup(html, 'lxml') # 解析文档
+        all_li = Soup.find('div', class_='tqtongji1').find_all('li')
+        url_list = []
+        for li in all_li:
+            url_list.append([li.get_text(), li.find('a')['href']])       
+        return url_list
+    
 
+    def get_month_weather(self, year_number, month_number):
+        # month_url = 'http://lishi.tianqi.com/beijing/201712.html'
+        url_list = self.get_url()
+        for i in range(len(url_list)-1, -1, -1):
+            year_split = int(url_list[i][0].encode('utf-8')[:4])
+            month_split = int(url_list[i][0].encode('utf-8')[7:9])
+            if year_split == year_number and month_split == month_number:
+                month_url = url_list[i][1]
+        html = requests.get(month_url).text
+        Soup = BeautifulSoup(html, 'lxml') # 解析文档
+        all_ul = Soup.find('div', class_='tqtongji2').find_all('ul')
+        month_weather = []
+        for i in range(1, len(all_ul)):
+            ul = all_ul[i]
+            li_list = []
+            for li in ul.find_all('li'):
+                li_list.append(li.get_text().encode('utf-8'))
+            month_weather.append(li_list)
+        return month_weather       
+
+example = get_history_weather()
+weather_result = example.get_month_weather(2017,1)+example.get_month_weather(2017,2)+example.get_month_weather(2017,3)
+name=['date','high_temprature','low_temprature','weather_condition','wind_direction','wind_force']
+weather=pd.DataFrame(columns=name,data=weather_result)
+weather.to_csv(r'C:/Users/sindy123/Documents')
 
 if __name__ == "__main__":
     extract_all_hists(datetime(2017, 1, 2),
         datetime(2017, 1, 2), "./data/test/")
+is
