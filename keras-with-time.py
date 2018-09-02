@@ -10,7 +10,7 @@ from keras.layers import Add, Dense, Dropout, Input
 from keras.models import Model
 
 import quantize
-from dataset import get_hist_with_time, is_workday
+from dataset import get_hist_with_time
 from evaluate import deploy_model, test_model
 from submit import get_hour_density, submit_csv
 
@@ -45,7 +45,6 @@ def build_model():
     inputs_noise_img = Input(shape=(noise_size, ), name="noise_img")
     inputs_hour = Input(shape=(1, ), name="hour")
     inputs_weekday = Input(shape=(1, ), name="weekday")
-    inputs_workday = Input(shape=(1, ), name="workday")
 
     print(inputs_noise_img)
 

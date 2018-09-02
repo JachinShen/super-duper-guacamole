@@ -106,7 +106,6 @@ def get_hist_with_time(begin_date, end_date):
     frames = []
     hours = []
     weekday = []
-    workday = []
     date = begin_date
     delta_day = timedelta(days=1)
     while date <= end_date:
@@ -118,15 +117,13 @@ def get_hist_with_time(begin_date, end_date):
             frames.append(hist_file[key][:])
             hours.append(hour)
             weekday.append(date.weekday())
-            workday.append((is_workday(date)))
         hist_file.close()
         date += delta_day
 
     frames = np.array(frames)
     weekday = np.array(weekday)
     hours = np.array(hours)
-    workday = np.array(workday)
-    return frames, weekday, hours, workday
+    return frames, weekday, hours
 
 
 class get_history_weather():
