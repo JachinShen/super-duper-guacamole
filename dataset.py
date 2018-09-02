@@ -160,12 +160,9 @@ class get_history_weather():
             month_weather.append(li_list)
         return month_weather       
 
-example = get_history_weather()
-weather_result = example.get_month_weather(2017,1)+example.get_month_weather(2017,2)+example.get_month_weather(2017,3)
-name=['date','high_temprature','low_temprature','weather_condition','wind_direction','wind_force']
-weather=pd.DataFrame(columns=name,data=weather_result)
-weather.to_csv(r'C:/Users/sindy123/Documents')
-
 if __name__ == "__main__":
-    extract_all_hists(datetime(2017, 1, 2),
-        datetime(2017, 1, 2), "./data/test/")
+    example = get_history_weather()
+    weather_result = example.get_month_weather(2017,1)+example.get_month_weather(2017,2)+example.get_month_weather(2017,3)
+    name=['date','high_temprature','low_temprature','weather_condition','wind_direction','wind_force']
+    weather=pd.DataFrame(columns=name,data=weather_result)
+    weather.to_csv(r'C:/Users/sindy123/Documents')

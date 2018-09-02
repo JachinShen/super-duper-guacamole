@@ -18,6 +18,7 @@ is_test = False
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 
+np.random.seed(2333)
 
 def preprocess_data():
     if is_test:
@@ -27,7 +28,6 @@ def preprocess_data():
         density, weekday, hours = get_hist_with_time(
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
-    np.random.seed()
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
     hours = (hours.astype("float32") - 8) / 14.0
     weekday = (weekday.astype("float32") + 1) / 7.0
@@ -50,12 +50,18 @@ def build_model():
     noise_dense = Dense(64, activation="relu")(inputs_noise_img)
     hour_dense = Dense(64, activation="relu")(inputs_hour)
     weekday_dense = Dense(64, activation="relu")(inputs_weekday)
+    hour_dense_128 = Dense(128, activation="relu")(inputs_hour)
+    weekday_dense_128 = Dense(128, activation="relu")(inputs_weekday)
     x = Add()([noise_dense, hour_dense])
     x = Dense(64, activation="relu")(x)
     x = Add()([x, weekday_dense])
     x = Dense(64, activation="relu")(x)
     x = Add()([x, hour_dense])
-    x = Dense(64, activation="relu")(x)
+    x = Dense(128, activation="relu")(x)
+    x = Add()([x, weekday_dense_128])
+    x = Dense(128, activation="relu")(x)
+    x = Add()([x, hour_dense_128])
+    x = Dense(256, activation="relu")(x)
     #x = keras.layers.concatenate([inputs_weekday, x])
     x = Dropout(0.2)(x)
     predictions = Dense(img_size)(x)
@@ -70,7 +76,7 @@ def root_mean_squared_error(y_true, y_pred):
 
 if __name__ == "__main__":
     model = build_model()
-    model.compile(optimizer="adam", loss=root_mean_squared_error)
+    model.compile(optimizer="adam", loss='mean_squared_error')
     for epochs in range(7):
         X, y = preprocess_data()
         model.fit(x=X, y=y, epochs=5, batch_size=7)
