@@ -128,11 +128,12 @@ def get_hist_with_time(begin_date, end_date):
 
 class get_history_weather():
     def __init__(self):
-        self.request_url = 'http://lishi.tianqi.com/shanghai/index.html'
+        self.request_url = 'https://lishi.tianqi.com/shanghai/index.html'
     def get_url(self):
         # 获取所有月份的url
         html = requests.get(self.request_url).text
         Soup = BeautifulSoup(html, 'lxml') # 解析文档
+        print(Soup)
         all_li = Soup.find('div', class_='tqtongji1').find_all('li')
         url_list = []
         for li in all_li:
@@ -142,21 +143,19 @@ class get_history_weather():
 
     def get_month_weather(self, year_number, month_number):
         # month_url = 'http://lishi.tianqi.com/beijing/201712.html'
-        url_list = self.get_url()
-        for i in range(len(url_list)-1, -1, -1):
-            year_split = int(url_list[i][0].encode('utf-8')[:4])
-            month_split = int(url_list[i][0].encode('utf-8')[7:9])
-            if year_split == year_number and month_split == month_number:
-                month_url = url_list[i][1]
+        date = datetime(year_number, month_number, 1)
+        date_str = date.strftime("%Y%m")
+        print("Process: {}".format(date_str))
+        month_url = ("https://lishi.tianqi.com/shanghai/{}.html"
+            .format(date_str))
         html = requests.get(month_url).text
-        Soup = BeautifulSoup(html, 'lxml') # 解析文档
+        Soup = BeautifulSoup(html, 'html.parser') # 解析文档
         all_ul = Soup.find('div', class_='tqtongji2').find_all('ul')
         month_weather = []
-        for i in range(1, len(all_ul)):
-            ul = all_ul[i]
+        for ul in all_ul[1:]:
             li_list = []
             for li in ul.find_all('li'):
-                li_list.append(li.get_text().encode('utf-8'))
+                li_list.append(li.get_text())
             month_weather.append(li_list)
         return month_weather       
 
@@ -165,4 +164,4 @@ if __name__ == "__main__":
     weather_result = example.get_month_weather(2017,1)+example.get_month_weather(2017,2)+example.get_month_weather(2017,3)
     name=['date','high_temprature','low_temprature','weather_condition','wind_direction','wind_force']
     weather=pd.DataFrame(columns=name,data=weather_result)
-    weather.to_csv(r'C:/Users/sindy123/Documents')
+    weather.to_csv('./weather.csv', index=False)

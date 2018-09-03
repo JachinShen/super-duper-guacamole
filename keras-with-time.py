@@ -57,7 +57,7 @@ def build_model():
     mainline = Concatenate()([hour_dense_16, weekday_dense_16])
     mainline = Dense(32, activation="relu")(mainline)
     mainline = Add()([mainline, hour_dense_32, weekday_dense_32])
-    mainline = Dense(64, activation="relu")(mainline)
+    mainline = Dense(256, activation="relu")(mainline)
     mainline = Dropout(0.2)(mainline)
     mainline = Concatenate()([mainline, hour_dense_64, weekday_dense_64])
     predictions = Dense(img_size, activation="relu")(mainline)
