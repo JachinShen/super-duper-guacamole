@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from keras import backend as K
-from keras.layers import Add, Dense, Dropout, Input
+from keras.layers import Add, Dense, Dropout, Input, Concatenate
 from keras.models import Model
 
 import quantize
@@ -14,7 +14,7 @@ from dataset import get_hist_with_time
 from evaluate import deploy_model, test_model
 from submit import get_hour_density, submit_csv
 
-is_test = False
+is_test = True
 img_size = (quantize.lat_ctr() - 1) * (quantize.lon_ctr() - 1)
 noise_size = 100
 
@@ -47,24 +47,20 @@ def build_model():
 
     print(inputs_noise_img)
 
-    noise_dense = Dense(64, activation="relu")(inputs_noise_img)
-    hour_dense = Dense(64, activation="relu")(inputs_hour)
-    weekday_dense = Dense(64, activation="relu")(inputs_weekday)
-    hour_dense_128 = Dense(128, activation="relu")(inputs_hour)
-    weekday_dense_128 = Dense(128, activation="relu")(inputs_weekday)
-    x = Add()([noise_dense, hour_dense])
-    x = Dense(64, activation="relu")(x)
-    x = Add()([x, weekday_dense])
-    x = Dense(64, activation="relu")(x)
-    x = Add()([x, hour_dense])
-    x = Dense(128, activation="relu")(x)
-    x = Add()([x, weekday_dense_128])
-    x = Dense(128, activation="relu")(x)
-    x = Add()([x, hour_dense_128])
-    x = Dense(256, activation="relu")(x)
-    #x = keras.layers.concatenate([inputs_weekday, x])
-    x = Dropout(0.2)(x)
-    predictions = Dense(img_size)(x)
+    #noise_dense = Dense(32, activation="relu")(inputs_noise_img)
+    hour_dense_16 = Dense(16, activation="relu")(inputs_hour)
+    hour_dense_32 = Dense(32, activation="relu")(hour_dense_16)
+    hour_dense_64 = Dense(64, activation="relu")(hour_dense_32)
+    weekday_dense_16 = Dense(16, activation="relu")(inputs_weekday)
+    weekday_dense_32 = Dense(32, activation="relu")(weekday_dense_16)
+    weekday_dense_64 = Dense(64, activation="relu")(weekday_dense_32)
+    mainline = Concatenate()([hour_dense_16, weekday_dense_16])
+    mainline = Dense(32, activation="relu")(mainline)
+    mainline = Add()([mainline, hour_dense_32, weekday_dense_32])
+    mainline = Dense(64, activation="relu")(mainline)
+    mainline = Dropout(0.2)(mainline)
+    mainline = Concatenate()([mainline, hour_dense_64, weekday_dense_64])
+    predictions = Dense(img_size, activation="relu")(mainline)
     model = Model(inputs=[inputs_noise_img, inputs_hour, inputs_weekday],
                   outputs=predictions)
     return model
@@ -77,9 +73,8 @@ def root_mean_squared_error(y_true, y_pred):
 if __name__ == "__main__":
     model = build_model()
     model.compile(optimizer="adam", loss='mean_squared_error')
-    for epochs in range(7):
-        X, y = preprocess_data()
-        model.fit(x=X, y=y, epochs=5, batch_size=7)
+    X, y = preprocess_data()
+    model.fit(x=X, y=y, epochs=40, batch_size=7)
 
     if is_test:
         errors = []
