@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 
 from quantize import lat_quantize, lon_quantize
-import requests  #导入requests
-from bs4 import BeautifulSoup  #导入bs4中的BeautifulSoup
+import requests  # 导入requests
+from bs4 import BeautifulSoup  # 导入bs4中的BeautifulSoup
 import os
 import re
 import csv
 import time
 import json
-#coding=utf-8
+# coding=utf-8
 
 lat_min, lat_max = 31.1, 31.4
 lon_min, lon_max = 121.3, 121.8
@@ -126,20 +126,71 @@ def get_hist_with_time(begin_date, end_date):
     return frames, weekday, hours
 
 
+def bad_weather(weather_condition):
+    if "\u96e8" in weather_condition:
+        return 1
+    else:
+        return 0
+
+
+def get_weather_dict():
+    weather_map = {'晴': 1, '多云': 1, '阴': 1,
+                   '小雨': 0, '中雨': 0, '大雨': 0, '阵雨':0,
+                   '小雪': 0, '中雪': 0, '大雪': 0}
+    weather_data = pd.read_csv("./weather.csv")[['date', 'weather_condition']]
+    weather_date = weather_data['date']
+    weather_condition = weather_data['weather_condition']
+    weather_dict = {}
+    for date, cond in zip(weather_date, weather_condition):
+        weather_dict[date] = weather_map[cond]
+    # map(lambda date_cond: weather_dict.setdefault(date_cond[0], date_cond[1]),
+        # zip(weather_date, weather_condition))
+    return weather_dict
+
+
+def get_hist_with_time_weather(begin_date, end_date):
+    frames = []
+    hours = []
+    weekday = []
+    weather = []
+    date = begin_date
+    delta_day = timedelta(days=1)
+    weather_dict = get_weather_dict()
+    while date <= end_date:
+        date_str = datetime.strftime(date, "%Y%m%d")
+        date_str_weather = datetime.strftime(date, "%Y-%m-%d")
+        hist_file = h5py.File("./data/hist/{}.h5"
+                              .format(date_str), "r")
+        for hour in range(9, 23):
+            key = "hour: {}".format(hour)
+            frames.append(hist_file[key][:])
+            hours.append(hour)
+            weekday.append(date.weekday())
+            weather.append((weather_dict[date_str_weather]))
+        hist_file.close()
+        date += delta_day
+
+    frames = np.array(frames)
+    weekday = np.array(weekday)
+    hours = np.array(hours)
+    weather = np.array(weather)
+    return frames, weekday, hours, weather
+
+
 class get_history_weather():
     def __init__(self):
         self.request_url = 'https://lishi.tianqi.com/shanghai/index.html'
+
     def get_url(self):
         # 获取所有月份的url
         html = requests.get(self.request_url).text
-        Soup = BeautifulSoup(html, 'lxml') # 解析文档
+        Soup = BeautifulSoup(html, 'lxml')  # 解析文档
         print(Soup)
         all_li = Soup.find('div', class_='tqtongji1').find_all('li')
         url_list = []
         for li in all_li:
-            url_list.append([li.get_text(), li.find('a')['href']])       
+            url_list.append([li.get_text(), li.find('a')['href']])
         return url_list
-    
 
     def get_month_weather(self, year_number, month_number):
         # month_url = 'http://lishi.tianqi.com/beijing/201712.html'
@@ -147,9 +198,9 @@ class get_history_weather():
         date_str = date.strftime("%Y%m")
         print("Process: {}".format(date_str))
         month_url = ("https://lishi.tianqi.com/shanghai/{}.html"
-            .format(date_str))
+                     .format(date_str))
         html = requests.get(month_url).text
-        Soup = BeautifulSoup(html, 'html.parser') # 解析文档
+        Soup = BeautifulSoup(html, 'html.parser')  # 解析文档
         all_ul = Soup.find('div', class_='tqtongji2').find_all('ul')
         month_weather = []
         for ul in all_ul[1:]:
@@ -157,11 +208,20 @@ class get_history_weather():
             for li in ul.find_all('li'):
                 li_list.append(li.get_text())
             month_weather.append(li_list)
-        return month_weather       
+        return month_weather
 
-if __name__ == "__main__":
+
+def get_all_weather():
     example = get_history_weather()
-    weather_result = example.get_month_weather(2017,1)+example.get_month_weather(2017,2)+example.get_month_weather(2017,3)
-    name=['date','high_temprature','low_temprature','weather_condition','wind_direction','wind_force']
-    weather=pd.DataFrame(columns=name,data=weather_result)
+    weather_result = example.get_month_weather(
+        2017, 1)+example.get_month_weather(2017, 2)+example.get_month_weather(2017, 3)
+    name = ['date', 'high_temprature', 'low_temprature',
+            'weather_condition', 'wind_direction', 'wind_force']
+    weather = pd.DataFrame(columns=name, data=weather_result)
     weather.to_csv('./weather.csv', index=False)
+
+
+if __name__ == '__main__':
+    frames, weekday, hours, weather = get_hist_with_time_weather(
+        datetime(2017, 2, 6), datetime(2017, 3, 6))
+    print(weather)
