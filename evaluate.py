@@ -8,7 +8,9 @@ import pandas as pd
 
 import quantize
 from submit import get_hour_density
+from dataset import get_weather_dict
 
+weather_dict = get_weather_dict()
 
 def RMSE(target, outputs):
     return np.sqrt(np.mean(np.square(target - outputs)))
@@ -32,7 +34,8 @@ def generate_test_X(date, hour):
     hour_input = (np.array([hour]).astype("float32") - 8) / 14.0
     day_input = (np.array([weekday]).astype("float32") + 1) / 7.0
     sample_input = sample.reshape((1, 100))
-    return [sample_input, hour_input, day_input]
+    weather_input = np.array([weather_dict[date.strftime("%Y-%m-%d")]])
+    return [sample_input, hour_input, day_input, weather_input]
 
 
 def test_model(model, date, hour, is_show=False):

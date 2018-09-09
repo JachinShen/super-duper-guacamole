@@ -10,7 +10,7 @@ from keras.layers import Add, Dense, Dropout, Input, Concatenate
 from keras.models import Model
 
 import quantize
-from dataset import get_hist_with_time
+from dataset import get_hist_with_time_weather
 from evaluate import deploy_model, test_model
 from submit import get_hour_density, submit_csv
 
@@ -22,10 +22,10 @@ np.random.seed(2333)
 
 def preprocess_data():
     if is_test:
-        density, weekday, hours = get_hist_with_time(
+        density, weekday, hours, weather = get_hist_with_time_weather(
             datetime(2017, 2, 6), datetime(2017, 3, 5))
     else:
-        density, weekday, hours = get_hist_with_time(
+        density, weekday, hours, weather = get_hist_with_time_weather(
             datetime(2017, 2, 6), datetime(2017, 3, 12))
 
     noise_samples = np.random.uniform(size=(density.shape[0], noise_size))
@@ -35,7 +35,7 @@ def preprocess_data():
     train_img = np.array([
         img.flatten().astype("float32")/100.0 for img in density])
 
-    X = [noise_samples, hours, weekday]
+    X = [noise_samples, hours, weekday, weather]
     y = train_img
     return X, y
 
@@ -44,24 +44,27 @@ def build_model():
     inputs_noise_img = Input(shape=(noise_size, ), name="noise_img")
     inputs_hour = Input(shape=(1, ), name="hour")
     inputs_weekday = Input(shape=(1, ), name="weekday")
+    inputs_weather = Input(shape=(1, ), name="weather")
 
     print(inputs_noise_img)
 
     #noise_dense = Dense(32, activation="relu")(inputs_noise_img)
     hour_dense_16 = Dense(16, activation="relu")(inputs_hour)
     hour_dense_32 = Dense(32, activation="relu")(hour_dense_16)
-    hour_dense_64 = Dense(64, activation="relu")(hour_dense_32)
+    #hour_dense_64 = Dense(64, activation="relu")(hour_dense_32)
     weekday_dense_16 = Dense(16, activation="relu")(inputs_weekday)
     weekday_dense_32 = Dense(32, activation="relu")(weekday_dense_16)
-    weekday_dense_64 = Dense(64, activation="relu")(weekday_dense_32)
-    mainline = Concatenate()([hour_dense_16, weekday_dense_16])
-    mainline = Dense(32, activation="relu")(mainline)
-    mainline = Add()([mainline, hour_dense_32, weekday_dense_32])
-    mainline = Dense(256, activation="relu")(mainline)
+    #weekday_dense_64 = Dense(64, activation="relu")(weekday_dense_32)
+    weather_dense_16 = Dense(16, activation="relu")(inputs_weather)
+    weather_dense_32 = Dense(32, activation="relu")(weather_dense_16)
+    mainline = Concatenate()([hour_dense_16, weekday_dense_16, weather_dense_16])
+    mainline = Dense(64, activation="relu")(mainline)
+    #mainline = Add()([mainline, hour_dense_32, weekday_dense_32])
+    mainline = Dense(64, activation="relu")(mainline)
     mainline = Dropout(0.2)(mainline)
-    mainline = Concatenate()([mainline, hour_dense_64, weekday_dense_64])
+    mainline = Concatenate()([mainline, hour_dense_32, weekday_dense_32, weather_dense_32])
     predictions = Dense(img_size, activation="relu")(mainline)
-    model = Model(inputs=[inputs_noise_img, inputs_hour, inputs_weekday],
+    model = Model(inputs=[inputs_noise_img, inputs_hour, inputs_weekday, inputs_weather],
                   outputs=predictions)
     return model
 
@@ -74,7 +77,7 @@ if __name__ == "__main__":
     model = build_model()
     model.compile(optimizer="adam", loss='mean_squared_error')
     X, y = preprocess_data()
-    model.fit(x=X, y=y, epochs=40, batch_size=7)
+    model.fit(x=X, y=y, epochs=60, batch_size=18)
 
     if is_test:
         errors = []
